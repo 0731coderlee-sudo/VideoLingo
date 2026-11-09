@@ -108,6 +108,21 @@ def test_empty_key_for_a_hosted_endpoint_is_still_an_error(monkeypatch):
         module.get_api_key()
 
 
+def test_lmstudio_env_overrides_config(monkeypatch):
+    module = _ask_gpt_module()
+    monkeypatch.setattr(
+        module,
+        "load_key",
+        {"api.key": "from-yaml", "api.base_url": "http://127.0.0.1:9999/v1", "api.model": "yaml-model"}.get,
+    )
+    monkeypatch.setenv("LMSTUDIO_API_KEY", "lm-studio")
+    monkeypatch.setenv("LMSTUDIO_BASE_URL", "http://127.0.0.1:1234/v1")
+    monkeypatch.setenv("LMSTUDIO_MODEL", "qwen3.6-35b-a3b-uncensored-hauhaucs-aggressive")
+    assert module.get_api_key() == "lm-studio"
+    assert module.resolve_api_base_url() == "http://127.0.0.1:1234/v1"
+    assert module.resolve_api_model() == "qwen3.6-35b-a3b-uncensored-hauhaucs-aggressive"
+
+
 # ------------------------------------------------------------------
 # sidebar: recognition language dropdown (#395, #264, #280, #394, #408, #475)
 # ------------------------------------------------------------------

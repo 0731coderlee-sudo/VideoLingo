@@ -9,14 +9,18 @@
 
 display_language: "zh-CN"
 
-# API settings
+# API settings — default: local LM Studio (OpenAI-compatible). Do not use cloud LLMs by default.
+# Env overrides (optional): LMSTUDIO_API_KEY / LMSTUDIO_BASE_URL / LMSTUDIO_MODEL
+#   or VIDEOLINGO_API_KEY / VIDEOLINGO_BASE_URL / VIDEOLINGO_MODEL
 api:
-  key: 'YOUR_API_KEY'
-  base_url: 'https://api.openlux.ai/v1'
-  model: 'gpt-6-luna'
+  key: 'lm-studio'
+  base_url: 'http://127.0.0.1:1234/v1'
+  # LM Studio server model id (OpenAI /v1/chat/completions). If your client uses a
+  # routed id like openai-api/lmstudio/..., use the bare server name below for VideoLingo.
+  model: 'qwen3.6-35b-a3b-uncensored-hauhaucs-aggressive'
   llm_support_json: false
 # *Number of LLM multi-threaded accesses, set to 1 if using local LLM
-max_workers: 4
+max_workers: 1
 
 # Language settings, written into the prompt, can be described in natural language
 target_language: '简体中文'
