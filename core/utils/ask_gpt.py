@@ -45,6 +45,28 @@ def _load_cache(prompt, resp_type, log_title):
 
 LOCAL_API_KEY = "not-needed"  # the OpenAI client refuses an empty key; local servers ignore it
 
+# ------------
+# env overrides (LM Studio / local OpenAI-compatible)
+# ------------
+
+def _env_first(*names):
+    for name in names:
+        value = os.environ.get(name)
+        if value is not None and str(value).strip():
+            return str(value).strip()
+    return None
+
+
+def resolve_api_base_url():
+    """Prefer LMSTUDIO_/VIDEOLINGO_ env, then config.yaml."""
+    return _env_first("LMSTUDIO_BASE_URL", "VIDEOLINGO_BASE_URL") or load_key("api.base_url")
+
+
+def resolve_api_model():
+    """Prefer LMSTUDIO_/VIDEOLINGO_ env, then config.yaml."""
+    return _env_first("LMSTUDIO_MODEL", "VIDEOLINGO_MODEL") or load_key("api.model")
+
+
 def is_local_endpoint(base_url):
     """Ollama, LM Studio, vLLM... on this machine or the private network need no API key."""
     host = (urlparse(base_url if "//" in str(base_url) else f"//{base_url}").hostname or "").lower()
@@ -57,10 +79,12 @@ def is_local_endpoint(base_url):
     return address.is_loopback or address.is_private or address.is_unspecified
 
 def get_api_key():
-    key = load_key("api.key")
+    key = _env_first("LMSTUDIO_API_KEY", "VIDEOLINGO_API_KEY")
+    if key is None:
+        key = load_key("api.key")
     if key:
         return key
-    if is_local_endpoint(load_key("api.base_url")):
+    if is_local_endpoint(resolve_api_base_url()):
         return LOCAL_API_KEY
     raise ValueError("API key is not set")
 
@@ -111,8 +135,8 @@ def ask_gpt(prompt, resp_type=None, valid_def=None, log_title="default"):
         rprint("use cache response")
         return cached
 
-    model = load_key("api.model")
-    base_url = normalize_base_url(load_key("api.base_url"))
+    model = resolve_api_model()
+    base_url = normalize_base_url(resolve_api_base_url())
     client = OpenAI(api_key=api_key, base_url=base_url)
     response_format = {"type": "json_object"} if resp_type == "json" and load_key("api.llm_support_json") else None
 
